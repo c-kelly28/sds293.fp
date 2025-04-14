@@ -11,6 +11,7 @@ editor_options:
 [Youth Risk Behavior Surveillance System (YRBSS), 2023](https://www.cdc.gov/yrbs/data/index.html) https://www.cdc.gov/yrbs/data/index.html
 
 ## Exploratory data analysis
+
 ```{r}
 library(tidyverse)
 library(Hmisc)
@@ -25,30 +26,62 @@ data <- mdb.get('XXH2023_YRBS_Data.mdb', tables = "XXHq")
 data_qn<- mdb.get('XXH2023_YRBS_Data.mdb', tables = "XXHqn")
 ```
 
-## Whats in my data
+## What's in my data?
 
-## Data variation
-Visualize distributions
- 
+```{r}
+str(data)
+```
+
+Each of the questions asked in the National High School Youth Risk Behavior Survey (YRBS) has its own column in the dataset. Each row represents a participant in the survey, so their responses associated to each of questions is a single observation. The dataset mostly consists of integers that correlate to each of the possible multiple choice answers. So, if for question 1 (q1), when asked how old they were, the observation is 1. That would mean that person responded with A), they were 12 years or younger.
+
+## Data Variation 
+
+```{r, warning=FALSE}
+# demographic data variation
+ggplot(data = data) +
+  geom_histogram(mapping = aes(x= q7), binwidth = 5, color = "navy", fill = "lightblue")+
+  labs(x = "Weight (lbs)",
+       y = "Count",
+       title = "Weight Histogram") 
+
+
+
+
+```
+
+The Weight Histogram is pretty straightforward. Most of the respondents are around 60 lbs with pretty even variation. The distribution appears normally distributed that is a bit right skewed.
+
+```{r, warning=FALSE}
+# first drink
+ggplot(data = data) +
+  geom_histogram(mapping = aes(x= q41), binwidth = 1, color = "red", fill = "orange")+
+  labs(x = "Age Ranges",
+       y = "Count",
+       title = "Distribution on Age Ranges of First Alcoholic Drink") 
+```
+
+However, for the age when the respondent had their first alcoholic drink, most people have never had a drink other than a few sips. That is what 1 represents in x-axis. The vast majority responding to the survey haven't consumed alcohol and only a small percentage has. The second most common age range is 5 and 6 which represents 13-14 years old and 15-16 years old. This isn't too surprising since these age ranges are when people start to get curious before the legal age requirement.
+
 ## Missing Data
+
 ```{r}
 # missing data for complete data
 summary(data)
 vis_miss(data, warn_large_data = FALSE)
 ```
-There is a large amount of missing data, which is clearly evident in a missing data visualization. Around 50% of observations are missing data for most of the questions, with certain questions having no data whatsoever. This is likely due to the nature in which the data was collected. As this is national school based survey, 
+
+There is a large amount of missing data, which is clearly evident in a missing data visualization. Around 50% of observations are missing data for most of the questions, with certain questions having no data whatsoever. This is likely due to the nature in which the data was collected. As this is national school based survey,
 
 ```{r}
 # missing data for QN data
 summary(data_qn)
 vis_miss(data_qn, warn_large_data = FALSE)
 ```
-Compared to the full data set, there is more missing data for the calculated dichotomous variables. 
 
+Compared to the full data set, there is more missing data for the calculated dichotomous variables.
 
 ## Covariation
 
 # Project description
-  This project is focused on methodology, rather than attempting to answer a specific question about the data itself. Instead, the learning outcomes for this project are centered around gaining intuition for different unsupervised classification models and their appropriate uses.
-  The core component of this project is building multiple types of models and comparing the strengths and appropriateness of their classification models. The models included will be primarily unsupervised (K-means clustering, hierarchical clustering), but will also include a supervised model (decision tree). For this project to successful, pre-processing of data and careful selection of predictor variables is essential. 
-  Based on the initial exploratory data analysis conducted here, a potential problem is the amount of missing data in the data set. Missing data analysis (e.g., MCAR, MAR, MNAR) and imputation are important components of model selection, and does impact both the types of models fit as well as the kinds of conclusions that can be drawn. However, evaluating and compensating for missing data like the type seen in this data set is beyond the scope of this project both due to time constraints. For this project, the data set will be significantly reduced using list wise deletion with the understanding that this is a dramatic oversimplification of the data and results would likely vary if other methods were used to deal ith missing data. 
+
+This project is focused on methodology, rather than attempting to answer a specific question about the data itself. Instead, the learning outcomes for this project are centered around gaining intuition for different unsupervised classification models and their appropriate uses. The core component of this project is building multiple types of models and comparing the strengths and appropriateness of their classification models. The models included will be primarily unsupervised (K-means clustering, hierarchical clustering), but will also include a supervised model (decision tree). For this project to successful, pre-processing of data and careful selection of predictor variables is essential. Based on the initial exploratory data analysis conducted here, a potential problem is the amount of missing data in the data set. Missing data analysis (e.g., MCAR, MAR, MNAR) and imputation are important components of model selection, and does impact both the types of models fit as well as the kinds of conclusions that can be drawn. However, evaluating and compensating for missing data like the type seen in this data set is beyond the scope of this project both due to time constraints. For this project, the data set will be significantly reduced using list wise deletion with the understanding that this is a dramatic oversimplification of the data and results would likely vary if other methods were used to deal ith missing data.
