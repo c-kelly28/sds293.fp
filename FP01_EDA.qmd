@@ -34,7 +34,7 @@ str(data)
 
 Each of the questions asked in the National High School Youth Risk Behavior Survey (YRBS) has its own column in the dataset. Each row represents a participant in the survey, so their responses associated to each of questions is a single observation. The dataset mostly consists of integers that correlate to each of the possible multiple choice answers. So, if for question 1 (q1), when asked how old they were, the observation is 1. That would mean that person responded with A), they were 12 years or younger.
 
-## Data Variation 
+## Data Variation
 
 ```{r, warning=FALSE}
 # demographic data variation
@@ -81,6 +81,29 @@ vis_miss(data_qn, warn_large_data = FALSE)
 Compared to the full data set, there is more missing data for the calculated dichotomous variables.
 
 ## Covariation
+```{r}
+# take numeric data out 
+numeric_data <- data[sapply(data, is.numeric)]
+corr_matrix <- cor(numeric_data, use = "complete.obs", method = "pearson")
+print(corr_matrix)
+```
+
+```{r}
+library(reshape2)
+melted_corr <- melt(corr_matrix)
+
+# find strongly correlated pairs
+strong_corrs <- subset(melted_corr, Var1 != Var2 & (value > 0.7 | value < -0.7))
+
+# get rid of duplicate pairs
+strong_corrs_unique <- strong_corrs[!duplicated(t(apply(strong_corrs[ , 1:2], 1, sort))), ]
+
+# View the results
+print(strong_corrs_unique)
+nrow(strong_corrs_unique)
+```
+
+There are 36 pairs of correlated variables (out of 12544 possible combinations). 
 
 # Project description
 
