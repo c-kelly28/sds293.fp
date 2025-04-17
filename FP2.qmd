@@ -1,0 +1,55 @@
+---
+title: "FP2"
+format: html
+---
+
+```{r}
+library(tidyverse)
+library(Hmisc)
+
+mdb.get('XXH2023_YRBS_Data.mdb', tables = TRUE)
+data <- mdb.get('XXH2023_YRBS_Data.mdb', tables = "XXHq")
+data_qn<- mdb.get('XXH2023_YRBS_Data.mdb', tables = "XXHqn")
+
+```
+
+```{r}
+filter_data <- data %>%
+  filter(!is.na(q26), q26 %in% c(1, 2)) %>%
+  mutate(q26_binary = factor(as.character(q26), levels = c("1", "2")))
+
+filter_data_model <- filter_data %>% 
+  # take out high NA values, question 26 original, and height/weight, record (ID)
+  select(-q26, -orig.rec, -q7orig, -q6orig, -record, -site) %>% 
+  # 
+  select(where(~ n_distinct(.) > 1))
+
+# Fit logistic regression model
+glm.fit <- glm(q26_binary ~ ., data = filter_data_model, family = binomial())
+
+# View summary
+summary(glm.fit)
+```
+
+```{r}
+step(glm.fit)
+```
+
+## RANDOM FOREST
+```{r}
+library(randomForest)
+set.seed(1)
+# Omit missing values
+filter_data_model <- na.omit(filter_data_model)
+# Sample training data
+train <- sample(1:nrow(filter_data_model), nrow(filter_data_model) / 2)
+# Make random forest
+bag.survey <- randomForest(q26_binary ~ ., data = filter_data_model, subset = train, mtry = 12, importance = TRUE)
+```
+
+```{r}
+summary(bag.survey)
+```
+
+
+
