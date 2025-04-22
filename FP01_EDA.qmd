@@ -8,11 +8,11 @@ editor_options:
 
 # Final Project 01: EDA
 
-[Youth Risk Behavior Surveillance System (YRBSS), 2023](https://www.cdc.gov/yrbs/data/index.html) https://www.cdc.gov/yrbs/data/index.html
+[Youth Risk Behavior Surveillance System (YRBSS), 2023](https://www.cdc.gov/yrbs/data/index.html)
 
 ## Exploratory data analysis
 
-```{r}
+```{r, message = FALSE}
 library(tidyverse)
 library(Hmisc)
 library(naniar)
@@ -24,6 +24,32 @@ data <- mdb.get('XXH2023_YRBS_Data.mdb', tables = "XXHq")
 
 # already pre-processed to make each question dichotomous
 data_qn<- mdb.get('XXH2023_YRBS_Data.mdb', tables = "XXHqn")
+
+# see data dictionary (pdf included in project folder) for individual item responses and question wording. 
+
+vars <- data |> select( 
+  q1,  # age
+  q2,  # sex
+  q19, # forced sexual intercourse (lifetime)
+  q20, # sexual violence (12 months)
+  q21, # sexual dating violence (12 months)
+  q22, # physical dating violence (12 months)
+  q33, # current cigarette use (30 days)
+  q36, # current electronic vapor use (30 days)
+  q42, # current alcohol use (30 days)
+  q48, # current marijuana use (30 days)
+  q57, # age first sexual intercourse
+  q58, # number sexual partners (lifetime)
+  q59, # current sexual activity/number sexual partners (3 months)
+  q60, # alcohol/drug use during sex (last time)
+  q61, # condom use (last time)
+  q62, # birth control method use (last time)
+  q64, # sexual orientation
+  q80, # social media use
+  q81, # HIV testing (lifetime)
+  q82, # STD testing (12 months)
+  q84  # current mental health (30 days)
+  ) 
 ```
 
 ## What's in my data?
@@ -39,51 +65,39 @@ Each of the questions asked in the National High School Youth Risk Behavior Surv
 ```{r, warning=FALSE}
 # demographic data variation
 ggplot(data = data) +
-  geom_histogram(mapping = aes(x= q7), binwidth = 5, color = "navy", fill = "lightblue")+
-  labs(x = "Weight (lbs)",
+  geom_histogram(mapping = aes(x= q84), bins = 5, color = "navy", fill = "lightblue")+
+  labs(x = "Mental Health",
        y = "Count",
-       title = "Weight Histogram") 
-
-
-
-
+       title = "Mental Health Histogram") 
 ```
 
-The Weight Histogram is pretty straightforward. Most of the respondents are around 60 lbs with pretty even variation. The distribution appears normally distributed that is a bit right skewed.
+Frequency of poor mental health (1 - Never, 2 - Rarely, 3 - Sometimes, 4 - Most of the time, 5 - Always) looks normally distributed, perhaps with a slight right skew. 
 
 ```{r, warning=FALSE}
 # first drink
 ggplot(data = data) +
-  geom_histogram(mapping = aes(x= q41), binwidth = 1, color = "red", fill = "orange")+
-  labs(x = "Age Ranges",
+  geom_histogram(mapping = aes(x= q42), bins = 7, color = "red", fill = "orange")+
+  labs(x = "Frequency",
        y = "Count",
-       title = "Distribution on Age Ranges of First Alcoholic Drink") 
+       title = "Distribution of Current Alcohol Use") 
 ```
 
-However, for the age when the respondent had their first alcoholic drink, most people have never had a drink other than a few sips. That is what 1 represents in x-axis. The vast majority responding to the survey haven't consumed alcohol and only a small percentage has. The second most common age range is 5 and 6 which represents 13-14 years old and 15-16 years old. This isn't too surprising since these age ranges are when people start to get curious before the legal age requirement.
+However, for distribution of current alcohol use there was dramatic right skew as the vast majority responding to the survey haven't consumed alcohol. This is unsurprising given that alcohol use is a lower frequency behavior, let along significant/frequent use. 
 
 ## Missing Data
 
 ```{r}
 # missing data for complete data
-summary(data)
-vis_miss(data, warn_large_data = FALSE)
+summary(vars)
+vis_miss(vars, warn_large_data = FALSE)
 ```
 
-There is a large amount of missing data, which is clearly evident in a missing data visualization. Around 50% of observations are missing data for most of the questions, with certain questions having no data whatsoever. This is likely due to the nature in which the data was collected. As this is national school based survey,
-
-```{r}
-# missing data for QN data
-summary(data_qn)
-vis_miss(data_qn, warn_large_data = FALSE)
-```
-
-Compared to the full data set, there is more missing data for the calculated dichotomous variables.
+There is a noticeable amount of missing data (12.3%), which is clearly evident in a missing data visualization. Importantly, missing data does not seem to be at random, with specific observations having large portions of missing data. Implications of missing data and steps for corrective action are outlined in the project description.  
 
 ## Covariation
 ```{r}
 # take numeric data out 
-numeric_data <- data[sapply(data, is.numeric)]
+numeric_data <- vars[sapply(vars, is.numeric)]
 corr_matrix <- cor(numeric_data, use = "complete.obs", method = "pearson")
 print(corr_matrix)
 ```
@@ -103,7 +117,7 @@ print(strong_corrs_unique)
 nrow(strong_corrs_unique)
 ```
 
-There are 36 pairs of correlated variables (out of 12544 possible combinations). 
+There are 12 pairs of correlated variables.
 
 # Project description
 
