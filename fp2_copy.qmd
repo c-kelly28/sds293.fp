@@ -1,0 +1,140 @@
+---
+title: "fp2_copy"
+format: html
+---
+
+---
+title: "FP2"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(Hmisc)
+
+mdb.get('XXH2023_YRBS_Data.mdb', tables = TRUE)
+data <- mdb.get('XXH2023_YRBS_Data.mdb', tables = "XXHq")
+subset <- data |>
+  select(q1:q107) |> 
+  select_if(is.numeric)
+
+data_clean <- na.omit(subset)
+```
+
+# PCA
+```{r}
+# Compute PCs
+pr.out <- prcomp(data_clean, scale = TRUE)
+pr.out$rotation # rotation matrices for each PC 
+
+# PC1 v PC2 plot
+biplot(pr.out, scale = 0)
+
+# evaluate variance of PCs
+pr.out$sdev # standard dev.
+pr.var <- pr.out$sdev^2 # varience
+pr.var
+pve <- pr.var / sum(pr.var) # proportion varience explained
+pve
+
+head(pve*100) # top percentages of varience explained (first 6 PCs)
+```
+
+```{r}
+par(mfrow = c(1, 2))
+# Scree plot of subset
+  # only first 10 components are visualized to better determine the location of the plots "elbow" 
+plot(pve[1:10], xlab = "Principal Component",
+     ylab = "Proportion of Variance Explained", ylim = c(0,1),
+     type = "b")
+
+# Cumulative explained variance
+  # First 10 PCs to match visualization above
+plot(cumsum(pve[1:10]), xlab = "Principal Component", ylab = "Cumulative Proprotion of Variance Explained", ylim = c(0,1), type = "b")
+
+# Cumulative proportion variance explained by first 3 components
+sum((pve[1:3]))
+```
+
+# Next steps
+Now that we have calculated our Principal Component Analysis, our next step in our plan of action is to pull out ~4 PCs from that capture the most variance. Then, we will do some data wrangling to obtain a PC score vector for each observation in the dataset. After we have completed this step, we will either use hierarchical clustering or k-means clustering in order to cluster our data into groups. We will label each observation into a specific cluster. Lastly, we will do discriminant analysis in order to pull out which specific predictors are the most important in separating the clusters from one another. 
+
+# K-means clustering
+```{r}
+set.seed(1)
+
+km.out <- kmeans(data_clean, 4, nstart = 20)
+km.out
+```
+
+```{r}
+library(ISLR2)
+nci.labs <- NCI60$labs
+nci.data <- NCI60$labs
+```
+
+# Hierarchical clustering
+
+```{r}
+# graphing function
+Cols <- function(vec) {
+  cols <- rainbow(length(unique(vec)))
+ return(cols[as.numeric(as.factor(vec))])
+  }
+```
+
+```{r}
+par(mfrow = c(1, 2))
+plot(pr.out$x[, 1:2], pch = 19,
+xlab = "Z1", ylab = "Z2")
+
+plot(pr.out$x[, c(1, 3)], pch = 19,
+xlab = "Z1", ylab = "Z3")
+```
+
+```{r}
+summary(pr.out)
+plot(pr.out)
+```
+
+```{r}
+sd.data <- scale(data_clean)
+par(mfrow = c(1, 3))
+```
+
+```{r}
+#plot 3 denodrograms
+par(mfrow = c(1, 3))
+data.dist <- dist(sd.data)
+plot(hclust(data.dist), xlab = "", sub = "", ylab = "", main = "Complete Linkage")
+plot(hclust(data.dist , method = "average"), main = "Average Linkage",
+xlab = "", sub = "", ylab = "")
+plot(hclust(data.dist , method = "single"), main = "Single Linkage",
+xlab = "", sub = "", ylab = "")
+```
+
+```{r}
+hc.out <- hclust(dist(sd.data))
+hc.clusters <- cutree(hc.out , 4)
+```
+
+```{r}
+plot(pr.out$x[, 1:2], col = Cols(hc.clusters), pch = 19)
+text(pr.out$x[, 1:2], labels = hc.clusters, col = Cols(hc.clusters), pos = 3)
+```
+
+```{r}
+par(mfrow = c(1, 3)) 
+
+plot(pr.out$x[, 1:2], col = Cols(hc.clusters), pch = 19,
+     xlab = "PC1", ylab = "PC2", main = "PC1 vs PC2")
+
+plot(pr.out$x[, c(1, 3)], col = Cols(hc.clusters), pch = 19,
+     xlab = "PC1", ylab = "PC3", main = "PC1 vs PC3")
+
+plot(pr.out$x[, 2:3], col = Cols(hc.clusters), pch = 19,
+     xlab = "PC2", ylab = "PC3", main = "PC2 vs PC3")
+```
+
