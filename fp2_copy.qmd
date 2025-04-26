@@ -154,3 +154,132 @@ plot(pr.out$x[, 2:3], col = Cols(hc.clusters), pch = 19,
      xlab = "PC2", ylab = "PC3", main = "PC2 vs PC3")
 ```
 
+```{r}
+plotly::plot_ly(data_clean, x = ~PC1, y = ~PC2, z = ~PC3, color = hc.clusters)
+```
+
+Upon examination of the above 3D plot, it became clear that there were additional clusters within what was being classified as "cluster 1". However, these additional clusters were not captured after changing the number of clusters requested. This is because of the skewed nature of the data and use of Euclidean distance. The skewed nature of the data means that the more extreme values, which are further apart in Euclidean space, will be separate with the addition of new clusters. However, we can see that the larger cluster 1, is in fact composed of multiple clusters. To capture this appropriately, the extreme clusters identified in this hierarchical clustering was separated from the data. A second PCA and hierarchical clustering was conducted on what was considered group "1." This analysis identified three clusters, resulting in a total of 5 clusters identified to be evaluted using discriminant analysis. 
+
+```{r}
+subset <- filter(data_clean, hc.clusters == 1)
+subset <- subset[,1:105]
+subset <- rename(subset, ID = PC1)
+```
+
+```{r}
+# Compute PCs
+pr.out2 <- prcomp(subset[, 1:104], scale = TRUE)
+pr.out2$rotation # rotation matrices for each PC 
+
+# PC1 v PC2 plot
+biplot(pr.out2, scale = 0)
+
+# evaluate variance of PCs
+pr.out2$sdev # standard dev.
+pr.var2 <- pr.out2$sdev^2 # varience
+pr.var2
+pve2 <- pr.var2 / sum(pr.var2) # proportion varience explained
+pve2
+
+head(pve2*100) # top percentages of varience explained (first 6 PCs)
+```
+
+```{r}
+par(mfrow = c(1, 2))
+# Scree plot of subset
+  # only first 10 components are visualized to better determine the location of the plots "elbow" 
+plot(pve2[1:10], xlab = "Principal Component",
+     ylab = "Proportion of Variance Explained", ylim = c(0,1),
+     type = "b")
+
+# Cumulative explained variance
+  # First 10 PCs to match visualization above
+plot(cumsum(pve2[1:10]), xlab = "Principal Component", ylab = "Cumulative Proprotion of Variance Explained", ylim = c(0,1), type = "b")
+
+# Cumulative proportion variance explained by first 3 components
+sum((pve2[1:3]))
+```
+
+```{r}
+
+pc_space2 <- as.matrix(subset[1:104]) %*% pr.out2$rotation[,1:3]
+
+pc_space2 <- as.data.frame(pc_space2)
+
+subset <- cbind(subset, pc_space2)
+```
+
+```{r}
+par(mfrow = c(1, 2))
+plot(subset[106:107], pch = 19,
+xlab = "PC1", ylab = "PC2")
+
+plot(subset[c(106, 108)], pch = 19,
+xlab = "PC1", ylab = "PC3")
+
+plot(subset[c(107, 108)], pch = 19,
+xlab = "PC2", ylab = "PC3")
+```
+
+```{r}
+summary(subset[106:108])
+plot(subset[106:108])
+```
+
+```{r}
+par(mfrow = c(1, 3))
+```
+
+```{r}
+#plot 3 denodrograms
+par(mfrow = c(1, 1))
+data.dist2 <- dist(pc_space2)
+
+# plot(hclust(data.dist), xlab = "", sub = "", ylab = "", main = "Complete Linkage")
+
+plot(hclust(data.dist2 , method = "average"), main = "Average Linkage",
+xlab = "", sub = "", ylab = "")
+
+#plot(hclust(data.dist , method = "single"), main = "Single Linkage", xlab = "", sub = "", ylab = "")
+```
+
+```{r}
+hc.out2 <- hclust(dist(pc_space2), method = "average")
+hc.clusters2 <- cutree(hc.out2 , 3)
+
+subset <- cbind(subset, as.data.frame(hc.clusters2))
+```
+
+```{r}
+plotly::plot_ly(subset, x = ~PC1, y = ~PC2, z = ~PC3, color = hc.clusters2)
+```
+
+```{r}
+subset$hc.clusters2 <- recode(hc.clusters2, `1` = "1a", `2` = "1b", `3` = "1c")
+
+subset_clusters <- subset[, c(105,109)]
+```
+
+```{r}
+data_clean <- left_join(data_clean, subset_clusters, by = join_by(PC1 == ID))
+
+data_clean$hc.clusters <- as.character(data_clean$hc.clusters) 
+
+cluster <- rep.int(NA, 7242)
+
+for (i in 1:7242) {
+  if (data_clean$hc.clusters[i] == "1") {
+    cluster[i] <- data_clean$hc.clusters2[i]
+  } else {
+    cluster[i] <- data_clean$hc.clusters[i]
+  }
+}
+
+data_clean <- cbind(data_clean, as.data.frame(cluster))
+```
+
+```{r}
+plotly::plot_ly(data_clean, x = ~PC1, y = ~PC2, z = ~PC3, color = cluster)
+```
+
+LILY -- when conducting the discriminant analysis, use the "cluster" variable in data_clean for the groups.
