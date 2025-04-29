@@ -301,16 +301,38 @@ The assumptions for QDA are more relaxed in that we don't need to have a common 
 library(ISLR2)
 library(MASS)
 
+# data with only the questions (original data)
+data_clean_questions <- data_clean %>%
+  dplyr::select(q1:q107) %>%
+  mutate(cluster_fixed = factor(as.character(cluster), levels = c("1a", "1b", "1c", "2", "3"))) %>%
+  dplyr::filter(cluster_fixed != "3" & cluster_fixed != "2") # removing cluster 3 & 2 bc we can't perform qda with it in
+
+# removing extra level
+data_clean_questions$cluster_fixed <- droplevels(data_clean_questions$cluster_fixed)
+
 # separate the data into training and testing 
 set.seed(1)
-train <- sample(1:nrow(data_clean), size = 3621)
+train <- sample(1:nrow(data_clean_questions), size = 3575)
 test <- (-train)
-data_clean.train <- data_clean[train, ] # training data
-data_clean.test <- data_clean[-train, ] # test data
+data_clean.train <- data_clean_questions[train, ] # training data
+data_clean.test <- data_clean_questions[-train, ] # test data
 ```
 
 ```{r}
-qda.cluster <- qda(cluster ~ PC1 + PC2 + PC3, data = data_clean.train)
+table(data_clean_questions$cluster_fixed)
+
+qda.cluster <- qda(cluster_fixed ~ ., data = data_clean_questions) # error bc cluster 3 & 2 are too small to conduct qda  
+
+# ANOTHER ERROR: RANK DEFICIENCY IN GROUP 1C!!!!!!!
+# There are so many errors piling up, I'm going to stop now
+
+
+
+
+
+
+
+
 qda.cluster
 
 qda.pred <- predict(qda.cluster, data_clean.test)
