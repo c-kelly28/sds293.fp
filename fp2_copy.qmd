@@ -293,11 +293,14 @@ plotly::plot_ly(data_clean, x = ~PC1, y = ~PC2, z = ~PC3, color = cluster, size 
 
 # Discriminant Analysis:
 
-## Linear Discriminant Analysis (LDA):
+## Quadratic Discriminant Analysis (QDA):
 
-To conduct LDA we first must assume that the data is normally distributed and that each of the clusters have equal variance. We're assuming that the data meets each of the requirements, even though it may not be true.
+The assumptions for QDA are more relaxed in that we don't need to have a common variance within the clusters. This is a much more realistic viewing of the data since the clusters are so uneven. However, in choosing this method we will have higher variance and lower bias. So, we're assuming that the data has low variance and high bias.
 
 ```{r}
+library(ISLR2)
+library(MASS)
+
 # separate the data into training and testing 
 set.seed(1)
 train <- sample(1:nrow(data_clean), size = 3621)
@@ -305,54 +308,6 @@ test <- (-train)
 data_clean.train <- data_clean[train, ] # training data
 data_clean.test <- data_clean[-train, ] # test data
 ```
-
-```{r}
-library(ISLR2)
-library(MASS)
-
-# LDA using training data 
-lda.cluster <- lda(cluster ~ PC1 + PC2 + PC3, data = data_clean.train)
-lda.cluster
-
-plot(lda.cluster)
-```
-
-Most of the observations in the survey belong to the 1 cluster, specifically 1a. 68.7% of the surveys correspond to the 1a cluster, 20.4% to 1b, and 9.6% to 1c. For cluster 1, 98.7% of the observations belong in that group, which indicates that grouping are unfairly distributed.
-
-```{r}
-lda.pred <- predict(ld.cluster, data_clean.test)
-lda.pred <- lda.pred$class
-
-# confustion matrix
-confusion_matrix <- table(lda.pred, data_clean.test$cluster)
-print(confusion_matrix)
-
-# accuracy of matrix
-accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
-print(accuracy)
-
-# overall error rate
-1-accuracy
-
-# class-specific error rates
-one.a <- 1 - confusion_matrix[1,1]/(sum(confusion_matrix[1, ]))
-one.b <- 1 - confusion_matrix[2, 2]/(sum(confusion_matrix[2, ]))
-one.c <- 1 - confusion_matrix[3, 3]/(sum(confusion_matrix[3, ]))
-two <- 1 - confusion_matrix[4, 4]/(sum(confusion_matrix[4, ]))
-three <- 1 - confusion_matrix[5, 5]/(sum(confusion_matrix[5, ]))
-
-paste("1a:" ,round(one.a, 4))
-paste("1b:" ,round(one.b, 4))
-paste("1c:" ,round(one.c, 4))
-paste("2:" ,round(two, 4))
-paste("3:" ,round(three, 4))
-```
-
-The overall accuracy rate is 95.3% while the overall test error rate is 4.7%. This is a really low test error rate. The cluster specific error rates are relatively low as well. Cluster 2 has the highest error rate of 38.98% while cluster 3 has a 0% error rate.
-
-## Quadratic Discriminant Analysis (QDA):
-
-The assumptions for QDA are more relaxed in that we don't need to have a common variance within the clusters. This is a much more realistic viewing of the data since the clusters are so uneven. However, in choosing this method we will have higher variance and lower bias. So, we're assuming that the data has low variance and high bias.
 
 ```{r}
 qda.cluster <- qda(cluster ~ PC1 + PC2 + PC3, data = data_clean.train)
@@ -378,47 +333,10 @@ one.c <- 1 - confusion_matrix[3, 3]/(sum(confusion_matrix[3, ]))
 two <- 1 - confusion_matrix[4, 4]/(sum(confusion_matrix[4, ]))
 three <- 1 - confusion_matrix[5, 5]/(sum(confusion_matrix[5, ]))
 
-paste("1a:" ,round(one.a, 4))
-paste("1b:" ,round(one.b, 4))
-paste("1c:" ,round(one.c, 4))
-paste("2:" ,round(two, 4))
-paste("3:" ,round(three, 4))
+label <- c("1a:", "1b:", "1c:", "2:", "3:")
+error.rates <- c(round(one.a, 4), round(one.b, 4), round(one.c, 4), round(two, 4), round(three, 4))
+qda.spec <- tibble(label, error.rates)
+qda.spec
 ```
 
-The overall accuracy rate is 95.2% which is slightly lower than LDA's but so minutely that it doesn't matter too much. The overall test error is 4.8%.
-
-## Naive Bayes:
-
-```{r}
-library(naivebayes)
-nb.cluster <- naive_bayes(cluster ~ PC1 + PC2 + PC3, data = data_clean.train)
-nb.cluster
-
-nb.pred <- predict(nb.cluster, data_clean.test)
-
-
-confusion_matrix <- table(nb.pred, data_clean.test$cluster)
-print(confusion_matrix)
-
-# accuracy of matrix
-accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
-print(accuracy)
-
-# overall error rate
-1-accuracy
-
-# class-specific error rates
-one.a <- 1 - confusion_matrix[1,1]/(sum(confusion_matrix[1, ]))
-one.b <- 1 - confusion_matrix[2, 2]/(sum(confusion_matrix[2, ]))
-one.c <- 1 - confusion_matrix[3, 3]/(sum(confusion_matrix[3, ]))
-two <- 1 - confusion_matrix[4, 4]/(sum(confusion_matrix[4, ]))
-three <- 1 - confusion_matrix[5, 5]/(sum(confusion_matrix[5, ]))
-
-paste("1a:" ,round(one.a, 4))
-paste("1b:" ,round(one.b, 4))
-paste("1c:" ,round(one.c, 4))
-paste("2:" ,round(two, 4))
-paste("3:" ,round(three, 4))
-```
-
-The overall accuracy rate is 94.8% which is slightly lower than accuracy rates of QDA and LDA. The overall test error is 5.2%, which is a bit more than both of the previous methods.
+The overall accuracy rate is 95.2% which is slightly lower than LDA's but so minutely that it doesn't matter too much. The overall test error is 4.8%. For the cluster specific error rates, cluster 2 had the largest with 48.5%. This rate is significantly higher than the overall error rate of 4.8%. The lowest error rate beside cluster 3's of 0, is cluster 1a with .58%.

@@ -56,6 +56,7 @@ sum((pve[1:3]))
 
 
 ```{r}
+# matrix multiplication 
 pc_space <- as.matrix(data_clean) %*% pr.out$rotation[,1:3]
 ```
 
@@ -71,3 +72,83 @@ km.out
 ```
 
 # Hierarchical clustering
+
+# Discriminant Analysis:
+## Linear Discriminant Analysis (LDA):
+
+To conduct LDA we first must assume that the data is normally distributed and that each of the clusters have equal variance. We're assuming that the data meets each of the requirements, even though it may not be true.
+
+```{r}
+# LDA using training data 
+lda.cluster <- lda(cluster ~ PC1 + PC2 + PC3, data = data_clean.train)
+lda.cluster
+
+plot(lda.cluster)
+```
+
+Most of the observations in the survey belong to the 1 cluster, specifically 1a. 68.7% of the surveys correspond to the 1a cluster, 20.4% to 1b, and 9.6% to 1c. For cluster 1, 98.7% of the observations belong in that group, which indicates that grouping are unfairly distributed.
+
+```{r}
+lda.pred <- predict(ld.cluster, data_clean.test)
+lda.pred <- lda.pred$class
+
+# confustion matrix
+confusion_matrix <- table(lda.pred, data_clean.test$cluster)
+print(confusion_matrix)
+
+# accuracy of matrix
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+print(accuracy)
+
+# overall error rate
+1-accuracy
+
+# class-specific error rates
+one.a <- 1 - confusion_matrix[1,1]/(sum(confusion_matrix[1, ]))
+one.b <- 1 - confusion_matrix[2, 2]/(sum(confusion_matrix[2, ]))
+one.c <- 1 - confusion_matrix[3, 3]/(sum(confusion_matrix[3, ]))
+two <- 1 - confusion_matrix[4, 4]/(sum(confusion_matrix[4, ]))
+three <- 1 - confusion_matrix[5, 5]/(sum(confusion_matrix[5, ]))
+
+label <- c("1a:", "1b:", "1c:", "2:", "3:")
+error.rates <- c(round(one.a, 4), round(one.b, 4), round(one.c, 4), round(two, 4), round(three, 4))
+lda.spec <- tibble(label, error.rates)
+lda.spec
+```
+
+The overall accuracy rate is 95.3% while the overall test error rate is 4.7%. This is a really low test error rate. The cluster specific error rates are relatively low as well. Cluster 2 has the highest error rate of 38.98% while cluster 3 has a 0% error rate.
+
+## Naive Bayes:
+
+```{r}
+library(naivebayes)
+nb.cluster <- naive_bayes(cluster ~ PC1 + PC2 + PC3, data = data_clean.train)
+nb.cluster
+
+nb.pred <- predict(nb.cluster, data_clean.test)
+
+
+confusion_matrix <- table(nb.pred, data_clean.test$cluster)
+print(confusion_matrix)
+
+# accuracy of matrix
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+print(accuracy)
+
+# overall error rate
+1-accuracy
+
+# class-specific error rates
+one.a <- 1 - confusion_matrix[1,1]/(sum(confusion_matrix[1, ]))
+one.b <- 1 - confusion_matrix[2, 2]/(sum(confusion_matrix[2, ]))
+one.c <- 1 - confusion_matrix[3, 3]/(sum(confusion_matrix[3, ]))
+two <- 1 - confusion_matrix[4, 4]/(sum(confusion_matrix[4, ]))
+three <- 1 - confusion_matrix[5, 5]/(sum(confusion_matrix[5, ]))
+
+error.rates <- c(round(one.a, 4), round(one.b, 4), round(one.c, 4), round(two, 4), round(three, 4))
+nb.spec <- tibble(label, error.rates)
+nb.spec
+```
+
+The overall accuracy rate is 94.8% which is slightly lower than accuracy rates of QDA and LDA. The overall test error is 5.2%, which is a bit more than both of the previous methods.
+
