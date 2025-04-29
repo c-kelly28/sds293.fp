@@ -321,9 +321,9 @@ data_clean.test <- data_clean_questions[-train, ] # test data
 ```{r}
 table(data_clean_questions$cluster_fixed)
 
-qda.cluster <- qda(cluster_fixed ~ ., data = data_clean_questions) # error bc cluster 3 & 2 are too small to conduct qda  
+qda.cluster <- qda(cluster_fixed ~ ., data = data_clean.train) # error bc cluster 3 & 2 are too small to conduct qda  
 
-# ANOTHER ERROR: RANK DEFICIENCY IN GROUP 1C!!!!!!!
+# ANOTHER ERROR: RANK DEFICIENCY IN GROUP 1B!!!!!!!
 # There are so many errors piling up, I'm going to stop now
 
 
