@@ -304,41 +304,31 @@ library(MASS)
 # data with only the questions (original data)
 data_clean_questions <- data_clean %>%
   dplyr::select(q1:q107) %>%
-  mutate(cluster_fixed = factor(as.character(cluster), levels = c("1a", "1b", "1c", "2", "3"))) %>%
-  dplyr::filter(cluster_fixed != "3" & cluster_fixed != "2") # removing cluster 3 & 2 bc we can't perform qda with it in
+  mutate(cluster_fixed = factor(as.character(cluster), levels = c("1a", "1b", "1c", "2", "3"))) 
+
+
+#%>%
+#  dplyr::filter(cluster_fixed != "3" & cluster_fixed != "2") # removing cluster 3 & 2 bc we can't perform qda with it in
 
 # removing extra level
-data_clean_questions$cluster_fixed <- droplevels(data_clean_questions$cluster_fixed)
+#data_clean_questions$cluster_fixed <- droplevels(data_clean_questions$cluster_fixed)
 
 # separate the data into training and testing 
 set.seed(1)
-train <- sample(1:nrow(data_clean_questions), size = 3575)
+train <- sample(1:nrow(data_clean_questions), size = 3621)
 test <- (-train)
 data_clean.train <- data_clean_questions[train, ] # training data
 data_clean.test <- data_clean_questions[-train, ] # test data
 ```
 
 ```{r}
-table(data_clean_questions$cluster_fixed)
+library(naivebayes)
+nb.cluster <- naive_bayes(cluster_fixed ~ ., data = data_clean.train)
+nb.cluster
 
-qda.cluster <- qda(cluster_fixed ~ ., data = data_clean.train) # error bc cluster 3 & 2 are too small to conduct qda  
+nb.pred <- predict(nb.cluster, data_clean.test)
 
-# ANOTHER ERROR: RANK DEFICIENCY IN GROUP 1B!!!!!!!
-# There are so many errors piling up, I'm going to stop now
-
-
-
-
-
-
-
-
-qda.cluster
-
-qda.pred <- predict(qda.cluster, data_clean.test)
-qda.pred <- qda.pred$class
-
-confusion_matrix <- table(qda.pred, data_clean.test$cluster)
+confusion_matrix <- table(nb.pred, data_clean.test$cluster_fixed)
 print(confusion_matrix)
 
 # accuracy of matrix
@@ -355,14 +345,11 @@ one.c <- 1 - confusion_matrix[3, 3]/(sum(confusion_matrix[3, ]))
 two <- 1 - confusion_matrix[4, 4]/(sum(confusion_matrix[4, ]))
 three <- 1 - confusion_matrix[5, 5]/(sum(confusion_matrix[5, ]))
 
-label <- c("1a:", "1b:", "1c:", "2:", "3:")
 error.rates <- c(round(one.a, 4), round(one.b, 4), round(one.c, 4), round(two, 4), round(three, 4))
-qda.spec <- tibble(label, error.rates)
-qda.spec
+nb.spec <- tibble(label, error.rates)
+nb.spec
+
 ```
-
-The overall accuracy rate is 95.2% which is slightly lower than LDA's but so minutely that it doesn't matter too much. The overall test error is 4.8%. For the cluster specific error rates, cluster 2 had the largest with 48.5%. This rate is significantly higher than the overall error rate of 4.8%. The lowest error rate beside cluster 3's of 0, is cluster 1a with .58%.
-
 
 ## LDA
 ```{r}

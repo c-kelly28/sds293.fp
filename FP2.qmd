@@ -118,17 +118,29 @@ lda.spec
 
 The overall accuracy rate is 95.3% while the overall test error rate is 4.7%. This is a really low test error rate. The cluster specific error rates are relatively low as well. Cluster 2 has the highest error rate of 38.98% while cluster 3 has a 0% error rate.
 
-## Naive Bayes:
+## QDA 
 
 ```{r}
-library(naivebayes)
-nb.cluster <- naive_bayes(cluster ~ PC1 + PC2 + PC3, data = data_clean.train)
-nb.cluster
+table(data_clean_questions$cluster_fixed)
 
-nb.pred <- predict(nb.cluster, data_clean.test)
+qda.cluster <- qda(cluster_fixed ~ ., data = data_clean.train) # error bc cluster 3 & 2 are too small to conduct qda  
+
+# ANOTHER ERROR: RANK DEFICIENCY IN GROUP 1B!!!!!!!
+# There are so many errors piling up, I'm going to stop now
 
 
-confusion_matrix <- table(nb.pred, data_clean.test$cluster)
+
+
+
+
+
+
+qda.cluster
+
+qda.pred <- predict(qda.cluster, data_clean.test)
+qda.pred <- qda.pred$class
+
+confusion_matrix <- table(qda.pred, data_clean.test$cluster)
 print(confusion_matrix)
 
 # accuracy of matrix
@@ -145,10 +157,11 @@ one.c <- 1 - confusion_matrix[3, 3]/(sum(confusion_matrix[3, ]))
 two <- 1 - confusion_matrix[4, 4]/(sum(confusion_matrix[4, ]))
 three <- 1 - confusion_matrix[5, 5]/(sum(confusion_matrix[5, ]))
 
+label <- c("1a:", "1b:", "1c:", "2:", "3:")
 error.rates <- c(round(one.a, 4), round(one.b, 4), round(one.c, 4), round(two, 4), round(three, 4))
-nb.spec <- tibble(label, error.rates)
-nb.spec
+qda.spec <- tibble(label, error.rates)
+qda.spec
 ```
 
-The overall accuracy rate is 94.8% which is slightly lower than accuracy rates of QDA and LDA. The overall test error is 5.2%, which is a bit more than both of the previous methods.
+The overall accuracy rate is 95.2% which is slightly lower than LDA's but so minutely that it doesn't matter too much. The overall test error is 4.8%. For the cluster specific error rates, cluster 2 had the largest with 48.5%. This rate is significantly higher than the overall error rate of 4.8%. The lowest error rate beside cluster 3's of 0, is cluster 1a with .58%.
 
