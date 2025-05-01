@@ -382,6 +382,7 @@ y_train <- data_clean.train$cluster_fixed
 x_train <- data_clean.train %>% dplyr::select(-cluster_fixed)
 
 lda_model <- lda(x_train, grouping = y_train)
+plot(lda_model)
 ```
 
 ```{r}
@@ -392,11 +393,18 @@ y_test <- data_clean.test$cluster_fixed
 # Make predictions
 lda_pred <- predict(lda_model, newdata = x_test)
 # Confusion matrix
-table(Predicted = lda_pred$class, Actual = y_test)
+confusion_matrix <- table(Predicted = lda_pred$class, Actual = y_test)
+confusion_matrix
 
 # Accuracy
-mean(lda_pred$class == y_test)
+accuracy <- mean(lda_pred$class == y_test)
+accuracy
 lda_model$scaling
+
+# overall error rate
+1 - accuracy
+
+# there is a 3.6% overall error rate
 ```
 
 ```{r}
