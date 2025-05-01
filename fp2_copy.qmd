@@ -417,3 +417,10 @@ ggplot(lda_scores_df, aes(x = LD1, y = LD2, color = cluster)) +
   geom_point() +
   labs(title = "LDA: Cluster Separation by First Two Discriminants")
 ```
+
+```{r}
+importance <- apply(lda_model$scaling^2, 1, sum)
+importance_sorted <-sort(importance, decreasing = TRUE)
+importance_sorted
+```
+
